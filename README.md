@@ -17,7 +17,7 @@ Para ejecutar el backend de este proyecto, asegúrate de tener instalado:
 
 Antes de ejecutar la aplicación, asegúrate de establecer el puerto de ejecución deseado. Para ello, edita el archivo `launchSettings.json` en la siguiente ruta:
 
-####Properties/launchSettings.json
+Properties/launchSettings.json
 
 Dentro de este archivo, busca la sección `profiles` y modifica el valor de `applicationUrl` bajo `http` para definir el puerto que deseas usar.
 
