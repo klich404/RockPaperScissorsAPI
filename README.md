@@ -37,11 +37,3 @@ El frontend de este proyecto se encuentra en el siguiente repositorio de GitHub:
 2. Inicia el servidor backend.
 3. Accede a la interfaz del frontend para comenzar a jugar.
 
-## Contribuciones
-
-Las contribuciones son bienvenidas. Si deseas contribuir, por favor abre un issue o envía un pull request.
-
-## Licencia
-
-Este proyecto está bajo la licencia MIT.
-
