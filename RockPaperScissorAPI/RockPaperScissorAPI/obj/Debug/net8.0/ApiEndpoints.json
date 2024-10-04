@@ -1,6 +1,27 @@
 [
   {
     "ContainingType": "RockPaperScissorAPI.Controllers.RockPaperScissorController",
+    "Method": "CreateGame",
+    "RelativePath": "api/RockPaperScissor/Game",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "player1ID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "player2ID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "RockPaperScissorAPI.Controllers.RockPaperScissorController",
     "Method": "Player",
     "RelativePath": "api/RockPaperScissor/Player",
     "HttpMethod": "POST",
@@ -16,23 +37,29 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RockPaperScissorAPI.Controllers.WeatherForecastController",
-    "Method": "Get",
-    "RelativePath": "WeatherForecast",
-    "HttpMethod": "GET",
+    "ContainingType": "RockPaperScissorAPI.Controllers.RockPaperScissorController",
+    "Method": "PlayRound",
+    "RelativePath": "api/RockPaperScissor/Round",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
+    "Parameters": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[RockPaperScissorAPI.WeatherForecast, RockPaperScissorAPI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "gameID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "player1Move",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "player2Move",
+        "Type": "System.String",
+        "IsRequired": false
       }
-    ]
+    ],
+    "ReturnTypes": []
   }
 ]
