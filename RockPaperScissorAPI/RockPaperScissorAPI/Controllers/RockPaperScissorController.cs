@@ -10,35 +10,44 @@ namespace RockPaperScissorAPI.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
+
     public class RockPaperScissorController : ControllerBase
     {
         private IConfiguration _configuration;
 
         private (Player player1, Player player2) GetGameInfo(SqlConnection connection, int gameID)
         {
+            // Consulta SQL para obtener la información de los jugadores (IDs y nombres) asociados a un juego específico
             string getPlayerInfoQuery = @"
-        SELECT p1.PlayerID, p1.FullName, p2.PlayerID, p2.FullName
-        FROM Games g
-        JOIN Players p1 ON g.Player1ID = p1.PlayerID
-        JOIN Players p2 ON g.Player2ID = p2.PlayerID
-        WHERE g.GameID = @gameID";
+       SELECT p1.PlayerID, p1.FullName, p2.PlayerID, p2.FullName
+       FROM Games g
+       JOIN Players p1 ON g.Player1ID = p1.PlayerID
+       JOIN Players p2 ON g.Player2ID = p2.PlayerID
+       WHERE g.GameID = @gameID";
 
+            // Crear y ejecutar el comando SQL para obtener la información de los jugadores
             using (SqlCommand command = new SqlCommand(getPlayerInfoQuery, connection))
             {
-                command.Parameters.AddWithValue("@gameID", gameID);
+                command.Parameters.AddWithValue("@gameID", gameID); // Añadir el parámetro gameID a la consulta
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    reader.Read();
+                    reader.Read(); // Leer el primer resultado del lector
+
+                    // Crear el objeto Player para el jugador 1
                     Player player1 = new Player
                     {
-                        PlayerID = reader.GetInt32(0),
-                        FullName = reader.GetString(1)
+                        PlayerID = reader.GetInt32(0), // Obtener el PlayerID del jugador 1
+                        FullName = reader.GetString(1)  // Obtener el nombre completo del jugador 1
                     };
+
+                    // Crear el objeto Player para el jugador 2
                     Player player2 = new Player
                     {
-                        PlayerID = reader.GetInt32(2),
-                        FullName = reader.GetString(3)
+                        PlayerID = reader.GetInt32(2), // Obtener el PlayerID del jugador 2
+                        FullName = reader.GetString(3)  // Obtener el nombre completo del jugador 2
                     };
+
+                    // Retornar ambos jugadores como una tupla
                     return (player1, player2);
                 }
             }
@@ -46,35 +55,39 @@ namespace RockPaperScissorAPI.Controllers
 
         private string DetermineRoundWinner(string player1Move, string player2Move)
         {
+            // Determinar el resultado de la ronda basado en las jugadas de ambos jugadores
             if (player1Move == player2Move)
             {
-                return "Empate";
+                return "Empate"; // Si ambos jugadores hacen la misma jugada, es empate
             }
+            // Combinaciones ganadoras para Player1
             else if ((player1Move == "Piedra" && player2Move == "Tijeras") ||
                      (player1Move == "Tijeras" && player2Move == "Papel") ||
                      (player1Move == "Papel" && player2Move == "Piedra"))
             {
-                return "Player1";
+                return "Player1"; // Player1 gana
             }
             else
             {
-                return "Player2";
+                return "Player2"; // Player2 gana
             }
         }
 
         private int GetPlayerID(SqlConnection connection, int gameID, string playerColumn)
         {
+            // Consulta SQL para obtener el ID del jugador especificado (Player1ID o Player2ID) a partir del GameID
             string getPlayerIDQuery = $"SELECT {playerColumn} FROM Games WHERE GameID = @gameID";
             using (SqlCommand command = new SqlCommand(getPlayerIDQuery, connection))
             {
-                command.Parameters.AddWithValue("@gameID", gameID);
-                return (int)command.ExecuteScalar();
+                command.Parameters.AddWithValue("@gameID", gameID); // Añadir el parámetro gameID a la consulta
+                return (int)command.ExecuteScalar(); // Devolver el ID del jugador
             }
         }
 
+        // Constructor del controlador que inyecta la configuración de la aplicación
         public RockPaperScissorController(IConfiguration configuration)
         {
-            _configuration = configuration;
+            _configuration = configuration; // Asignar la configuración a la variable de instancia
         }
 
 
@@ -117,33 +130,38 @@ namespace RockPaperScissorAPI.Controllers
         }
 
 
-
         [HttpPost]
         [Route("Game")]
         public IActionResult CreateGame([FromForm] int player1ID, [FromForm] int player2ID)
         {
+            // Validar que los dos jugadores no sean el mismo
             if (player1ID == player2ID)
             {
                 return BadRequest(new { message = "Los jugadores no pueden ser el mismo!" });
             }
 
+            // Crear conexión a la base de datos
             using (SqlConnection myCon = new SqlConnection(_configuration.GetConnectionString("RockPaperScissorsCon")))
             {
                 myCon.Open();
 
+                // Consulta para verificar si ambos jugadores existen en la base de datos
                 string checkPlayerQuery = "SELECT COUNT(1) FROM Players WHERE PlayerID = @playerID";
                 bool player1Exists = false;
                 bool player2Exists = false;
 
                 using (SqlCommand checkCommand = new SqlCommand(checkPlayerQuery, myCon))
                 {
+                    // Verificar si el jugador 1 existe
                     checkCommand.Parameters.AddWithValue("@playerID", player1ID);
                     player1Exists = (int)checkCommand.ExecuteScalar() > 0;
 
+                    // Verificar si el jugador 2 existe
                     checkCommand.Parameters["@playerID"].Value = player2ID;
                     player2Exists = (int)checkCommand.ExecuteScalar() > 0;
                 }
 
+                // Retornar mensajes de error si alguno de los jugadores no existe
                 if (!player1Exists && !player2Exists)
                 {
                     return NotFound(new { message = "Ninguno de los jugadores existe." });
@@ -157,47 +175,54 @@ namespace RockPaperScissorAPI.Controllers
                     return NotFound(new { message = $"El jugador 2 con ID {player2ID} no existe." });
                 }
 
+                // Insertar el nuevo juego en la base de datos y obtener el nuevo GameID
                 string insertGameQuery = "INSERT INTO Games (Player1ID, Player2ID) OUTPUT INSERTED.GameID VALUES (@player1ID, @player2ID)";
                 int newGameID;
 
                 using (SqlCommand insertCommand = new SqlCommand(insertGameQuery, myCon))
                 {
+                    // Establecer parámetros para el comando de inserción
                     insertCommand.Parameters.AddWithValue("@player1ID", player1ID);
                     insertCommand.Parameters.AddWithValue("@player2ID", player2ID);
-                    newGameID = (int)insertCommand.ExecuteScalar();
+                    newGameID = (int)insertCommand.ExecuteScalar(); // Obtener el GameID del nuevo juego
                 }
 
+                // Obtener la información de los jugadores (nombre y ID)
                 string getPlayerInfoQuery = "SELECT PlayerID, FullName FROM Players WHERE PlayerID = @playerID";
                 Player player1Info;
                 Player player2Info;
 
                 using (SqlCommand getPlayerInfoCommand = new SqlCommand(getPlayerInfoQuery, myCon))
                 {
+                    // Obtener información del jugador 1
                     getPlayerInfoCommand.Parameters.AddWithValue("@playerID", player1ID);
                     using (SqlDataReader reader = getPlayerInfoCommand.ExecuteReader())
                     {
-                        reader.Read();
+                        reader.Read(); // Leer el primer resultado
                         player1Info = new Player
                         {
                             PlayerID = reader.GetInt32(0),
-                            FullName = reader.GetString(1)
+                            FullName = reader.GetString(1) // Obtener el nombre del jugador 1
                         };
                     }
 
+                    // Obtener información del jugador 2
                     getPlayerInfoCommand.Parameters["@playerID"].Value = player2ID;
                     using (SqlDataReader reader = getPlayerInfoCommand.ExecuteReader())
                     {
-                        reader.Read();
+                        reader.Read(); // Leer el primer resultado
                         player2Info = new Player
                         {
                             PlayerID = reader.GetInt32(0),
-                            FullName = reader.GetString(1)
+                            FullName = reader.GetString(1) // Obtener el nombre del jugador 2
                         };
                     }
                 }
 
+                // Cerrar la conexión antes de devolver el resultado
                 myCon.Close();
 
+                // Retornar la respuesta con el nuevo juego creado y la información de los jugadores
                 return StatusCode(201, new
                 {
                     message = "Nuevo juego creado!",
